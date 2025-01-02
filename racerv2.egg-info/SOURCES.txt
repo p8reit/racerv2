@@ -1,0 +1,9 @@
+MANIFEST.in
+README.md
+pyproject.toml
+setup.py
+racerv2.egg-info/PKG-INFO
+racerv2.egg-info/SOURCES.txt
+racerv2.egg-info/dependency_links.txt
+racerv2.egg-info/requires.txt
+racerv2.egg-info/top_level.txt

@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='my_django_app',
+    name='racerv2',
     version='0.1.0',
     packages=find_packages(),
     include_package_data=True,
@@ -9,12 +9,12 @@ setup(
         'Django>=3.2',
     ],
     license='MIT',
-    description='A Django app for XYZ functionality.',
+    description='Racer AA Auth Feature',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
-    url='https://github.com/yourusername/my_django_app',
-    author='Your Name',
-    author_email='your.email@example.com',
+    url='https://github.com/p8reit/racerv2',
+    author='p8reit',
+    author_email='p8reit@yahoo.com',
     classifiers=[
         'Environment :: Web Environment',
         'Framework :: Django',

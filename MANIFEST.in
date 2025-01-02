@@ -1,4 +1,4 @@
 include README.md
 include LICENSE
-include my_django_app/static/*
-include my_django_app/templates/*
+include racerv2/static/*
+include racerv2/templates/*
