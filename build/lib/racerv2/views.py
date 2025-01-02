@@ -11,7 +11,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 @login_required
-@permission_required('racerv2.view_trackedrequest', raise_exception=True)
+@permission_required('embed_racing.view_trackedrequest', raise_exception=True)
 def generate_links(request):
     if request.method == 'POST':
         num_links = int(request.POST.get('num_links'))
@@ -27,14 +27,14 @@ def generate_links(request):
                 group_name=group_name
             )
             tracked_request.save()
-            generated_links.append(f"{base_url}/racerv2/track/{unique_id}.gif")
+            generated_links.append(f"{base_url}/embed_racing/track/{unique_id}.gif")
         
         return JsonResponse({"generated_links": generated_links})
     
-    return render(request, 'racerv2/generate_links.html')
+    return render(request, 'embed_racing/generate_links.html')
 
 @login_required
-@permission_required('racerv2.view_trackedrequest', raise_exception=True)
+@permission_required('embed_racing.view_trackedrequest', raise_exception=True)
 def track_embed(request, unique_id):
     try:
         user_agent = request.META.get('HTTP_USER_AGENT', '')
@@ -66,7 +66,7 @@ def track_embed(request, unique_id):
         return HttpResponse("Error processing the request", status=500)
 
 @login_required
-@permission_required('racerv2.view_trackedrequest', raise_exception=True)
+@permission_required('embed_racing.view_trackedrequest', raise_exception=True)
 def dashboard(request):
     logs = TrackedRequest.objects.filter(hidden=False).order_by('unique_id')
 
@@ -84,7 +84,7 @@ def dashboard(request):
     ]
 
     # Render the dashboard
-    return render(request, 'racerv2/dashboard.html', {
+    return render(request, 'embed_racing/dashboard.html', {
         'logs': logs_list,
         'total_logs': len(logs_list),
         'unique_ips': len(set(log['ip_address'] for log in logs_list))

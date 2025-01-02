@@ -2,8 +2,17 @@ MANIFEST.in
 README.md
 pyproject.toml
 setup.py
+racerv2/__init__.py
+racerv2/admin.py
+racerv2/apps.py
+racerv2/auth_hooks.py
+racerv2/models.py
+racerv2/tests.py
+racerv2/urls.py
+racerv2/views.py
 racerv2.egg-info/PKG-INFO
 racerv2.egg-info/SOURCES.txt
 racerv2.egg-info/dependency_links.txt
 racerv2.egg-info/requires.txt
 racerv2.egg-info/top_level.txt
+racerv2/migrations/__init__.py

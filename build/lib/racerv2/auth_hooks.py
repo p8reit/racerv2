@@ -7,11 +7,11 @@ class EmbedRacingMenu(MenuItemHook):
         MenuItemHook.__init__(self,
                               'Embed Racing Dashboard',
                               'fas fa-flag-checkered fa-fw',  # Icon
-                              'racerv2:dashboard',  # Correct namespace
-                              navactive=['racerv2:'])  # Correct navactive prefix
+                              'embed_racing:dashboard',  # Namespace and view name
+                              navactive=['embed_racing:'])
 
     def render(self, request):
-        if request.user.has_perm('racerv2.view_trackedrequest'):
+        if request.user.has_perm('embed_racing.view_trackedrequest'):
             return MenuItemHook.render(self, request)
         return ''
 
@@ -21,4 +21,4 @@ def register_menu():
 
 @hooks.register('url_hook')
 def register_url():
-    return UrlHook(urls, 'racerv2', '^racerv2/')  # Correct namespace and prefix
+    return UrlHook(urls, 'embed_racing', '^embed_racing/')
