@@ -7,6 +7,8 @@ setup(
     include_package_data=True,
     install_requires=[
         'Django>=3.2',
+        'Pillow',
+        
     ],
     license='MIT',
     description='Racer AA Auth Feature',
