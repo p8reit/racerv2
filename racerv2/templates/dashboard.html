@@ -1,0 +1,29 @@
+{% extends "structure/base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+  <h2>Dashboard</h2>
+  <p>Total Logs: {{ total_logs }}</p>
+  <p>Unique IPs: {{ unique_ips }}</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Unique ID</th>
+        <th>IP Address</th>
+        <th>User Agent</th>
+        <th>Referrer</th>
+        <th>Timestamp</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for log in logs %}
+        <tr>
+          <td>{{ log.unique_id }}</td>
+          <td>{{ log.ip_address }}</td>
+          <td>{{ log.user_agent }}</td>
+          <td>{{ log.referrer }}</td>
+          <td>{{ log.timestamp }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

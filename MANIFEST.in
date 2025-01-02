@@ -1,0 +1,4 @@
+include README.md
+include LICENSE
+include my_django_app/static/*
+include my_django_app/templates/*

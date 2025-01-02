@@ -1,0 +1,10 @@
+table {
+    width: 100%;
+    font-size: calc(0.5rem + 0.5vw); /* Dynamically scales based on viewport width */
+    table-layout: fixed; /* Prevents column expansion */
+  }
+  
+  thead th, tbody td {
+    word-wrap: break-word; /* Ensures content wraps instead of expanding columns */
+  }
+  

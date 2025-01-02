@@ -1,0 +1,79 @@
+{% extends "structure/base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="container-fluid mt-4">
+  <h2 class="text-center">Dashboard</h2>
+  <p class="text-center"><strong>Total Logs:</strong> {{ total_logs }}</p>
+  <p class="text-center"><strong>Total Relays:</strong> {{ relay_count_total }}</p>
+  <p class="text-center"><strong>Google Hosted Count:</strong> {{ google_hosted_count }}</p>
+
+  <div class="table-responsive">
+    <table class="table table-bordered table-sm" style="font-size: 0.75rem;">
+      <thead class="table-dark">
+        <tr>
+          <th scope="col">Unique ID</th>
+          <th scope="col">Group Name</th>
+          <th scope="col">Relay Count</th>
+          <th scope="col">Last Accessed</th>
+          <th scope="col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td>{{ log.unique_id }}</td>
+          <td>{{ log.group_name }}</td>
+          <td>{{ log.relay_count }}</td>
+          <td>{{ log.timestamp }}</td>
+          <td>
+            <form method="POST">
+              {% csrf_token %}
+              <input type="hidden" name="group_name_to_hide" value="{{ log.group_name }}">
+              <button type="submit" class="btn btn-danger btn-sm">Hide Group</button>
+            </form>
+          </td>
+        </tr>
+        <tr>
+          <td colspan="5">
+            <div class="table-responsive">
+              <table class="table table-bordered table-sm" style="font-size: 0.65rem;">
+                <thead>
+                  <tr>
+                    <th scope="col">Hashed IP</th>
+                    <th scope="col">User Agent</th>
+                    <th scope="col">Referrer</th>
+                    <th scope="col">Headers</th>
+                    <th scope="col">Google Hosted</th>
+                    <th scope="col">Timestamp</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for record in log.logs %}
+                  <tr>
+                    <td>{{ record.ip_address }}</td>
+                    <td>{{ record.user_agent }}</td>
+                    <td>{{ record.referrer }}</td>
+                    <td>{{ record.headers }}</td>
+                    <td>{{ record.is_google_hosted }}</td>
+                    <td>{{ record.timestamp }}</td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="6" class="text-center">No connection records available for this link.</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="text-center">No visible logs available.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
