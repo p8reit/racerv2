@@ -1,27 +1,22 @@
 import uuid
+import json
+import logging
+from datetime import datetime
+from io import BytesIO
+from PIL import Image
+
 from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.decorators import login_required, permission_required
 from django.core.paginator import Paginator
-from .models import TrackedRequest
-import json
-from datetime import datetime
-from io import BytesIO
-from PIL import Image
-import logging
 from django.utils import timezone
+from django.core.cache import cache
+
 from .models import TrackedRequest, ConnectionRecord
-from django.shortcuts import redirect
-
-
-
-
 
 logger = logging.getLogger(__name__)
 
 # Cache the GIF to optimize responses
-from django.core.cache import cache
-
 def get_1x1_gif():
     gif = cache.get('1x1_gif')
     if not gif:
@@ -38,16 +33,8 @@ def hide_group(request):
     if request.method == "POST":
         group_name_to_hide = request.POST.get("group_name_to_hide")
         if group_name_to_hide:
-            # Update all matching TrackedRequest records to be hidden
-            affected_rows = TrackedRequest.objects.filter(group_name=group_name_to_hide).update(hidden=True)
-            if affected_rows > 0:
-                # Log the number of affected rows for debugging
-                print(f"Successfully hid {affected_rows} rows for group: {group_name_to_hide}")
-            else:
-                print(f"No rows found for group: {group_name_to_hide}")
-        else:
-            print("Group name to hide is missing in the POST data.")
-    return redirect('racerv2:dashboard')  # Redirect back to the dashboard
+            TrackedRequest.objects.filter(group_name=group_name_to_hide).update(is_hidden=True)
+    return render(request, 'racerv2/dashboard.html')
 
 @login_required
 @permission_required('racerv2.view_trackedrequest', raise_exception=True)
@@ -118,28 +105,12 @@ def track_embed(request, unique_id):
         logger.error(f"Error processing request for {unique_id}: {str(e)}")
         return HttpResponse("Error processing the request", status=500)
 
-
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required, permission_required
-from .models import Group, TrackedRequest
-
 @login_required
 @permission_required('racerv2.view_trackedrequest', raise_exception=True)
 def dashboard(request):
-    # Only include groups that are not hidden
-    visible_groups = Group.objects.filter(hidden=False)
-    logs = TrackedRequest.objects.filter(group__in=visible_groups).order_by('-timestamp')
-
-    # Aggregate statistics
-    total_logs = logs.count()
-    relay_count_total = logs.values('group').distinct().count()
-    google_hosted_count = logs.filter(connections__is_google_hosted=True).count()
+    logs = TrackedRequest.objects.filter(is_hidden=False).order_by('-timestamp')
 
     return render(request, 'racerv2/dashboard.html', {
         'logs': logs,
-        'total_logs': total_logs,
-        'relay_count_total': relay_count_total,
-        'google_hosted_count': google_hosted_count,
+        'total_logs': logs.count(),
     })
-
-
