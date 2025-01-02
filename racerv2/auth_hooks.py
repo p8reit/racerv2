@@ -5,7 +5,7 @@ from . import urls
 class EmbedRacingMenu(MenuItemHook):
     def __init__(self):
         MenuItemHook.__init__(self,
-                              'Embed Racing Dashboard',
+                              'Racer Dashboard',
                               'fas fa-flag-checkered fa-fw',  # Icon
                               'racerv2:dashboard',  # Correct namespace
                               navactive=['racerv2:'])  # Correct navactive prefix
