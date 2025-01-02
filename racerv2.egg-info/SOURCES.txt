@@ -17,8 +17,3 @@ racerv2.egg-info/requires.txt
 racerv2.egg-info/top_level.txt
 racerv2/migrations/0001_initial.py
 racerv2/migrations/__init__.py
-racerv2/templates/base.html:Zone.Identifier
-racerv2/templates/dashboard.html
-racerv2/templates/dashboard.html:Zone.Identifier
-racerv2/templates/generate_links.html
-racerv2/templates/generate_links.html:Zone.Identifier

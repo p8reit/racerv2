@@ -1,6 +1,6 @@
 table {
     width: 100%;
-    font-size: calc(0.5rem + 0.5vw); /* Dynamically scales based on viewport width */
+    font-size: 9; /* Dynamically scales based on viewport width */
     table-layout: fixed; /* Prevents column expansion */
   }
   

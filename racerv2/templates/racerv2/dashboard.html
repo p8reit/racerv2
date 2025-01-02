@@ -1,14 +1,42 @@
 {% extends "structure/base.html" %}
 {% block title %}Dashboard{% endblock %}
 {% block content %}
-<div class="container-fluid mt-4">
+<div class="container-fluid mt-4" style="font-size: 1.25rem;"> <!-- Adjust global font size here -->
   <h2 class="text-center">Dashboard</h2>
   <p class="text-center"><strong>Total Logs:</strong> {{ total_logs }}</p>
   <p class="text-center"><strong>Total Relays:</strong> {{ relay_count_total }}</p>
   <p class="text-center"><strong>Google Hosted Count:</strong> {{ google_hosted_count }}</p>
 
+  <button class="btn btn-primary mb-4" data-bs-toggle="modal" data-bs-target="#generateLinksModal">Generate Links</button>
+
+  <!-- Modal for Generating Links -->
+  <div class="modal fade" id="generateLinksModal" tabindex="-1" aria-labelledby="generateLinksModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="generateLinksModalLabel">Generate Links</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="generateLinksForm" method="POST" action="{% url 'racerv2:generate_links' %}">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="groupName" class="form-label">Group Name</label>
+              <input type="text" class="form-control" id="groupName" name="group_name" required>
+            </div>
+            <div class="mb-3">
+              <label for="numLinks" class="form-label">Number of Links</label>
+              <input type="number" class="form-control" id="numLinks" name="num_links" min="1" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Generate</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="table-responsive">
-    <table class="table table-bordered table-sm" style="font-size: 0.75rem;">
+    <table class="table table-bordered table-sm" style="font-size: 1.25rem;"> <!-- Adjust table font size -->
       <thead class="table-dark">
         <tr>
           <th scope="col">Unique ID</th>
@@ -26,17 +54,28 @@
           <td>{{ log.relay_count }}</td>
           <td>{{ log.timestamp }}</td>
           <td>
-            <form method="POST">
+            <!-- Hide Group -->
+            <form method="POST" action="{% url 'racerv2:hide_group' %}" style="display: inline;">
               {% csrf_token %}
               <input type="hidden" name="group_name_to_hide" value="{{ log.group_name }}">
               <button type="submit" class="btn btn-danger btn-sm">Hide Group</button>
             </form>
+
+            <!-- Generate Links -->
+            <button 
+              type="button" 
+              class="btn btn-primary btn-sm" 
+              data-bs-toggle="modal" 
+              data-bs-target="#generateLinksModal"
+              data-group-name="{{ log.group_name }}">
+              Generate Links
+            </button>
           </td>
         </tr>
         <tr>
           <td colspan="5">
             <div class="table-responsive">
-              <table class="table table-bordered table-sm" style="font-size: 0.65rem;">
+              <table class="table table-bordered table-sm" style="font-size: 1.25rem;"> <!-- Adjust nested table font size -->
                 <thead>
                   <tr>
                     <th scope="col">Hashed IP</th>
@@ -76,4 +115,15 @@
     </table>
   </div>
 </div>
+
+<script>
+    // JavaScript to prefill the modal with the selected group name
+    const generateLinksModal = document.getElementById('generateLinksModal');
+    generateLinksModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget; // Button that triggered the modal
+        const groupName = button.getAttribute('data-group-name'); // Extract group name
+        const groupNameInput = generateLinksModal.querySelector('#groupName');
+        groupNameInput.value = groupName || ''; // Prefill the input
+    });
+</script>
 {% endblock %}

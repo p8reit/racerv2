@@ -10,6 +10,9 @@ from io import BytesIO
 from PIL import Image
 import logging
 from django.utils import timezone
+from .models import TrackedRequest, ConnectionRecord
+from django.shortcuts import redirect
+
 
 
 
@@ -28,6 +31,23 @@ def get_1x1_gif():
         gif = img_io.getvalue()
         cache.set('1x1_gif', gif)
     return gif
+
+@login_required
+@permission_required('racerv2.change_trackedrequest', raise_exception=True)
+def hide_group(request):
+    if request.method == "POST":
+        group_name_to_hide = request.POST.get("group_name_to_hide")
+        if group_name_to_hide:
+            # Update all matching TrackedRequest records to be hidden
+            affected_rows = TrackedRequest.objects.filter(group_name=group_name_to_hide).update(hidden=True)
+            if affected_rows > 0:
+                # Log the number of affected rows for debugging
+                print(f"Successfully hid {affected_rows} rows for group: {group_name_to_hide}")
+            else:
+                print(f"No rows found for group: {group_name_to_hide}")
+        else:
+            print("Group name to hide is missing in the POST data.")
+    return redirect('racerv2:dashboard')  # Redirect back to the dashboard
 
 @login_required
 @permission_required('racerv2.view_trackedrequest', raise_exception=True)
@@ -66,23 +86,31 @@ def track_embed(request, unique_id):
         ip_address = request.META.get('REMOTE_ADDR', '')
         referrer = request.META.get('HTTP_REFERER', '')
 
-        # Filter `request.META` to include only JSON-serializable values
-        headers = {k: v for k, v in request.META.items() if isinstance(v, (str, int, float, bool, list, dict, type(None)))}
-        headers_json = json.dumps(headers)  # Serialize the filtered dictionary
+        # Whitelist specific headers to extract
+        allowed_headers = [
+            'HTTP_HOST', 'HTTP_USER_AGENT', 'HTTP_ACCEPT', 'HTTP_ACCEPT_LANGUAGE',
+            'HTTP_ACCEPT_ENCODING', 'HTTP_COOKIE', 'HTTP_CONNECTION', 'HTTP_UPGRADE_INSECURE_REQUESTS',
+            'HTTP_SEC_FETCH_SITE', 'HTTP_SEC_FETCH_MODE', 'HTTP_SEC_FETCH_USER', 'HTTP_SEC_FETCH_DEST'
+        ]
 
-        # Retrieve the tracked request from the database
+        headers = {key: value for key, value in request.META.items() if key in allowed_headers}
+        headers_json = json.dumps(headers)  # Serialize the filtered headers
+
+        # Retrieve the tracked request
         tracked_request = TrackedRequest.objects.filter(unique_id=unique_id).first()
         if not tracked_request:
             logger.warning(f"Invalid unique_id accessed: {unique_id}")
             return HttpResponse("Invalid unique_id", status=404)
 
-        # Update the tracked request with the new data
-        tracked_request.ip_address = ip_address
-        tracked_request.user_agent = user_agent
-        tracked_request.referrer = referrer
-        tracked_request.headers = headers_json
-        tracked_request.timestamp = timezone.now()
-        tracked_request.save()
+        # Save connection record (assuming ConnectionRecord is properly set up)
+        ConnectionRecord.objects.create(
+            tracked_request=tracked_request,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            referrer=referrer,
+            headers=headers_json,
+            timestamp=timezone.now()
+        )
 
         # Serve the 1x1 transparent GIF
         return HttpResponse(get_1x1_gif(), content_type='image/gif')
@@ -91,27 +119,27 @@ def track_embed(request, unique_id):
         return HttpResponse("Error processing the request", status=500)
 
 
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required, permission_required
+from .models import Group, TrackedRequest
+
 @login_required
 @permission_required('racerv2.view_trackedrequest', raise_exception=True)
 def dashboard(request):
-    logs = TrackedRequest.objects.filter(hidden=False).order_by('unique_id')
-    logs_list = [
-        {
-            "unique_id": log.unique_id,
-            "ip_address": log.ip_address,
-            "user_agent": log.user_agent,
-            "referrer": log.referrer,
-            "geolocation": json.loads(log.geolocation) if log.geolocation else None,
-            "timestamp": log.timestamp,
-            "hidden": log.hidden
-        }
-        for log in logs
-    ]
+    # Only include groups that are not hidden
+    visible_groups = Group.objects.filter(hidden=False)
+    logs = TrackedRequest.objects.filter(group__in=visible_groups).order_by('-timestamp')
 
-    logger.debug(f"Logs passed to dashboard: {logs_list}")
+    # Aggregate statistics
+    total_logs = logs.count()
+    relay_count_total = logs.values('group').distinct().count()
+    google_hosted_count = logs.filter(connections__is_google_hosted=True).count()
 
     return render(request, 'racerv2/dashboard.html', {
-        'logs': logs_list,
-        'total_logs': len(logs_list),
-        'unique_ips': len(set(log['ip_address'] for log in logs_list))
+        'logs': logs,
+        'total_logs': total_logs,
+        'relay_count_total': relay_count_total,
+        'google_hosted_count': google_hosted_count,
     })
+
+
