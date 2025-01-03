@@ -1,13 +1,35 @@
 {% extends "structure/base.html" %}
-{% block title %}Generate Tracking Links{% endblock %}
+{% block title %}Generate Links{% endblock %}
 {% block content %}
-  <h2>Generate Tracking Links</h2>
-  <form method="post">
+<div class="container mt-4" style="font-size: 1.25rem;">
+  <h2 class="text-center">Generate Tracking Links</h2>
+  
+  <!-- Form to generate links -->
+  <form id="generateLinksForm" method="POST" action="{% url 'racerv2:generate_links' %}">
     {% csrf_token %}
-    <label for="num_links">Number of Links:</label>
-    <input type="number" name="num_links" id="num_links" required>
-    <label for="group_name">Group Name:</label>
-    <input type="text" name="group_name" id="group_name" required>
-    <button type="submit">Generate</button>
+    <div class="mb-3">
+      <label for="groupName" class="form-label">Group Name</label>
+      <input type="text" class="form-control" id="groupName" name="group_name" required>
+    </div>
+    <div class="mb-3">
+      <label for="numLinks" class="form-label">Number of Links</label>
+      <input type="number" class="form-control" id="numLinks" name="num_links" min="1" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Generate Links</button>
   </form>
+
+  <!-- Display generated links -->
+  {% if generated_links %}
+  <div class="mt-4">
+    <h4>Generated Links for Group: <strong>{{ group_name }}</strong></h4>
+    <ul class="list-group">
+      {% for link in generated_links %}
+      <li class="list-group-item">
+        <a href="{{ link }}" target="_blank">{{ link }}</a>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+</div>
 {% endblock %}

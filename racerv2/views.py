@@ -50,8 +50,9 @@ def generate_links_action(request):
 def generate_links(request):
     if request.method == 'POST':
         try:
-            num_links = int(request.POST.get('num_links'))
-            group_name = request.POST.get('group_name')
+            # Get parameters from the request
+            num_links = int(request.POST.get('num_links', 0))  # Default to 0 if not provided
+            group_name = request.POST.get('group_name', 'Default Group')  # Default group name
 
             if num_links <= 0:
                 return JsonResponse({"error": "Number of links must be greater than zero."}, status=400)
@@ -68,15 +69,20 @@ def generate_links(request):
                 tracked_request.save()
                 generated_links.append(f"{base_url}/racerv2/track/{unique_id}.gif")
 
-            return JsonResponse({"generated_links": generated_links})
-        except ValueError:
-            return JsonResponse({"error": "Invalid input."}, status=400)
+            # Render the links in the UI for web requests
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({"generated_links": generated_links})
+
+            return render(request, 'racerv2/generate_links.html', {
+                "generated_links": generated_links,
+                "group_name": group_name
+            })
+        except (ValueError, KeyError) as e:
+            return JsonResponse({"error": f"Invalid input: {str(e)}"}, status=400)
     
-    # Render the page for GET requests
+    # For GET requests, render the page with a form
     return render(request, 'racerv2/generate_links.html')
 
-@login_required
-@permission_required('racerv2.view_trackedrequest', raise_exception=True)
 def track_embed(request, unique_id):
     try:
         user_agent = request.META.get('HTTP_USER_AGENT', '')
@@ -118,9 +124,31 @@ def track_embed(request, unique_id):
 @login_required
 @permission_required('racerv2.view_trackedrequest', raise_exception=True)
 def dashboard(request):
+    # Fetch logs with related connection records
     logs = TrackedRequest.objects.filter(is_hidden=False).order_by('-timestamp')
 
+    # Enrich logs with related connection records
+    enriched_logs = []
+    for log in logs:
+        connection_records = ConnectionRecord.objects.filter(tracked_request=log).order_by('-timestamp')
+        enriched_logs.append({
+            'log': log,
+            'connection_records': connection_records
+        })
+
+    # Calculate totals
+    total_logs = logs.count()
+    relay_count_total = sum(int(log.relay_count) for log in logs if str(log.relay_count).isdigit())
+    google_hosted_count = sum(
+        1
+        for log in logs
+        for record in ConnectionRecord.objects.filter(tracked_request=log)
+        if record.is_google_hosted
+    )
+
     return render(request, 'racerv2/dashboard.html', {
-        'logs': logs,
-        'total_logs': logs.count(),
+        'logs': enriched_logs,
+        'total_logs': total_logs,
+        'relay_count_total': relay_count_total,
+        'google_hosted_count': google_hosted_count,
     })

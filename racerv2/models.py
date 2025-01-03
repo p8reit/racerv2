@@ -12,6 +12,7 @@ class TrackedRequest(models.Model):
     group_name = models.CharField(max_length=255, null=True, blank=True)  # Optional group identifier
     is_hidden = models.BooleanField(default=True)  # Boolean to mark hidden requests
     timestamp = models.DateTimeField(auto_now_add=True)
+    relay_count = models.CharField(max_length=45)
 
     def __str__(self):
         return f"Request {self.unique_id} from {self.ip_address}"
@@ -33,6 +34,7 @@ class ConnectionRecord(models.Model):
     referrer = models.URLField(blank=True, null=True)
     headers = models.JSONField()
     timestamp = models.DateTimeField(default=now)
+    is_google_hosted = models.BooleanField(default=True)
 
     def __str__(self):
         return f"Connection to {self.tracked_request.unique_id} at {self.timestamp}"
