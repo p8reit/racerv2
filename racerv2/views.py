@@ -4,6 +4,7 @@ import logging
 from datetime import datetime
 from io import BytesIO
 from PIL import Image
+import uuid
 
 from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponse
@@ -11,6 +12,8 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.core.paginator import Paginator
 from django.utils import timezone
 from django.core.cache import cache
+from django.shortcuts import render
+
 
 from .models import TrackedRequest, ConnectionRecord
 
@@ -35,6 +38,12 @@ def hide_group(request):
         if group_name_to_hide:
             TrackedRequest.objects.filter(group_name=group_name_to_hide).update(is_hidden=True)
     return render(request, 'racerv2/dashboard.html')
+
+
+def generate_links_action(request):
+    # Placeholder logic for the action
+    return JsonResponse({"message": "This is the generate-links-action endpoint."})
+
 
 @login_required
 @permission_required('racerv2.view_trackedrequest', raise_exception=True)
@@ -63,6 +72,7 @@ def generate_links(request):
         except ValueError:
             return JsonResponse({"error": "Invalid input."}, status=400)
     
+    # Render the page for GET requests
     return render(request, 'racerv2/generate_links.html')
 
 @login_required

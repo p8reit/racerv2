@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.timezone import now
 
 
 class TrackedRequest(models.Model):
@@ -9,7 +10,7 @@ class TrackedRequest(models.Model):
     geolocation = models.TextField(null=True, blank=True)
     headers = models.TextField(null=True, blank=True)
     group_name = models.CharField(max_length=255, null=True, blank=True)  # Optional group identifier
-    is_hidden = models.BooleanField(default=False)  # Boolean to mark hidden requests
+    is_hidden = models.BooleanField(default=True)  # Boolean to mark hidden requests
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -22,13 +23,19 @@ class TrackedRequest(models.Model):
 
 
 class ConnectionRecord(models.Model):
-    tracked_request_id = models.CharField(max_length=255)  # Reference unique_id directly
-    ip_address = models.CharField(max_length=45)
-    user_agent = models.TextField(null=True, blank=True)
-    referrer = models.TextField(null=True, blank=True)
-    headers = models.TextField(null=True, blank=True)
-    is_google_hosted = models.BooleanField(default=False)
-    timestamp = models.DateTimeField(auto_now_add=True)
+    tracked_request = models.ForeignKey(
+        'TrackedRequest',
+        on_delete=models.CASCADE,
+        related_name='connection_records'
+    )
+    ip_address = models.GenericIPAddressField()
+    user_agent = models.TextField()
+    referrer = models.URLField(blank=True, null=True)
+    headers = models.JSONField()
+    timestamp = models.DateTimeField(default=now)
+
+    def __str__(self):
+        return f"Connection to {self.tracked_request.unique_id} at {self.timestamp}"
 
     def __str__(self):
         return f"Connection from {self.ip_address}"
@@ -37,3 +44,7 @@ class ConnectionRecord(models.Model):
         ordering = ['-timestamp']
         verbose_name = "Connection Record"
         verbose_name_plural = "Connection Records"
+        
+        
+
+
