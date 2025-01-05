@@ -21,7 +21,8 @@
         </tr>
       </thead>
       <tbody>
-        {% for entry in logs if not entry.log.is_hidden %}
+        {% for entry in logs %}
+        {% if not entry.log.is_hidden %}
         <tr>
           <td>{{ entry.log.unique_id }}</td>
           <td>{{ entry.log.group_name }}</td>
@@ -70,6 +71,7 @@
             </div>
           </td>
         </tr>
+        {% endif %}
         {% empty %}
         <tr>
           <td colspan="5" class="text-center">No visible logs available.</td>
