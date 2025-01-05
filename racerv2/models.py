@@ -4,7 +4,7 @@ from django.utils.timezone import now
 
 class TrackedRequest(models.Model):
     unique_id = models.CharField(max_length=255, unique=True)
-    ip_address = models.CharField(max_length=45)
+    ip_address = models.CharField(max_length=64, blank=True, null=True)
     user_agent = models.TextField(null=True, blank=True)
     referrer = models.TextField(null=True, blank=True)
     geolocation = models.TextField(null=True, blank=True)
@@ -29,7 +29,7 @@ class ConnectionRecord(models.Model):
         on_delete=models.CASCADE,
         related_name='connection_records'
     )
-    ip_address = models.GenericIPAddressField()
+    ip_address = models.CharField(max_length=64, blank=True, null=True)
     user_agent = models.TextField()
     referrer = models.URLField(blank=True, null=True)
     headers = models.JSONField()

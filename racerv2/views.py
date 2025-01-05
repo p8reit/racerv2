@@ -4,7 +4,7 @@ import logging
 from datetime import datetime
 from io import BytesIO
 from PIL import Image
-import uuid
+import hashlib
 
 from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponse
@@ -13,11 +13,17 @@ from django.core.paginator import Paginator
 from django.utils import timezone
 from django.core.cache import cache
 from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
+
 
 
 from .models import TrackedRequest, ConnectionRecord
 
 logger = logging.getLogger(__name__)
+
+def hash_ip(ip_address):
+    """Hash an IP address using SHA256."""
+    return hashlib.sha256(ip_address.encode('utf-8')).hexdigest()
 
 # Cache the GIF to optimize responses
 def get_1x1_gif():
@@ -44,6 +50,17 @@ def generate_links_action(request):
     # Placeholder logic for the action
     return JsonResponse({"message": "This is the generate-links-action endpoint."})
 
+
+@login_required
+@permission_required('racerv2.view_trackedrequest', raise_exception=True)
+def view_connections(request, unique_id):
+    log = get_object_or_404(TrackedRequest, unique_id=unique_id)
+    connection_records = ConnectionRecord.objects.filter(tracked_request=log)
+    
+    return render(request, 'racerv2/view_connections.html', {
+        'log': log,
+        'connection_records': connection_records,
+    })
 
 @login_required
 @permission_required('racerv2.view_trackedrequest', raise_exception=True)
@@ -87,6 +104,7 @@ def track_embed(request, unique_id):
     try:
         user_agent = request.META.get('HTTP_USER_AGENT', '')
         ip_address = request.META.get('REMOTE_ADDR', '')
+        hashed_ip = hash_ip(ip_address) if ip_address else None  # Hash the IP address
         referrer = request.META.get('HTTP_REFERER', '')
 
         # Whitelist specific headers to extract
@@ -108,7 +126,7 @@ def track_embed(request, unique_id):
         # Save connection record (assuming ConnectionRecord is properly set up)
         ConnectionRecord.objects.create(
             tracked_request=tracked_request,
-            ip_address=ip_address,
+            ip_address=hashed_ip,  # Save the hashed IP address
             user_agent=user_agent,
             referrer=referrer,
             headers=headers_json,

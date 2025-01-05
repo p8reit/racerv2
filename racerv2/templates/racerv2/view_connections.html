@@ -1,0 +1,36 @@
+{% extends "structure/base.html" %}
+{% block title %}View Connections{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Connections for Log: {{ log.unique_id }}</h2>
+  <table class="table table-bordered table-sm">
+    <thead>
+      <tr>
+        <th>Hashed IP</th>
+        <th>User Agent</th>
+        <th>Referrer</th>
+        <th>Headers</th>
+        <th>Google Hosted</th>
+        <th>Timestamp</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for record in connection_records %}
+      <tr>
+        <td>{{ record.ip_address }}</td>
+        <td>{{ record.user_agent }}</td>
+        <td>{{ record.referrer }}</td>
+        <td>{{ record.headers }}</td>
+        <td>{{ record.is_google_hosted }}</td>
+        <td>{{ record.timestamp }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="6" class="text-center">No connection records available for this log.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <a href="{% url 'racerv2:dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+</div>
+{% endblock %}

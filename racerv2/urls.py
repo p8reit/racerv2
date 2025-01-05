@@ -9,6 +9,8 @@ urlpatterns = [
     path('generate-links/', views.generate_links, name='generate_links'),
     path('track/<str:unique_id>.gif', views.track_embed, name='track'),
     path('hide-group/', views.hide_group, name='hide_group'),
+    path('connections/<str:unique_id>/', views.view_connections, name='view_connections'),
+
 ]
 
 

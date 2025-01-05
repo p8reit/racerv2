@@ -1,18 +1,16 @@
 {% extends "structure/base.html" %}
 {% block title %}Dashboard{% endblock %}
 {% block content %}
-<div class="container-fluid mt-4" style="font-size: 1.25rem;"> <!-- Adjust global font size here -->
+<div class="container-fluid mt-4" style="font-size: 1.25rem;">
   <h2 class="text-center">Dashboard</h2>
   <p class="text-center"><strong>Total Logs:</strong> {{ total_logs }}</p>
   <p class="text-center"><strong>Total Relays:</strong> {{ relay_count_total }}</p>
   <p class="text-center"><strong>Google Hosted Count:</strong> {{ google_hosted_count }}</p>
 
-  <!-- Navigate to Generate Links Page -->
   <a href="{% url 'racerv2:generate_links' %}" class="btn btn-primary mb-4">Generate Links</a>
 
-
   <div class="table-responsive">
-    <table class="table table-bordered table-sm" style="font-size: 1.25rem;"> <!-- Adjust table font size -->
+    <table class="table table-bordered table-sm" style="font-size: 1.25rem;">
       <thead class="table-dark">
         <tr>
           <th scope="col">Unique ID</th>
@@ -23,25 +21,25 @@
         </tr>
       </thead>
       <tbody>
-        {% for log in logs %}
+        {% for entry in logs if not entry.log.is_hidden %}
         <tr>
-          <td>{{ log.unique_id }}</td>
-          <td>{{ log.group_name }}</td>
-          <td>{{ log.relay_count }}</td>
-          <td>{{ log.timestamp }}</td>
+          <td>{{ entry.log.unique_id }}</td>
+          <td>{{ entry.log.group_name }}</td>
+          <td>{{ entry.log.relay_count }}</td>
+          <td>{{ entry.log.timestamp }}</td>
           <td>
-            <!-- Hide Group -->
             <form method="POST" action="{% url 'racerv2:hide_group' %}" style="display: inline;">
               {% csrf_token %}
-              <input type="hidden" name="group_name_to_hide" value="{{ log.group_name }}">
+              <input type="hidden" name="group_name_to_hide" value="{{ entry.log.group_name }}">
               <button type="submit" class="btn btn-danger btn-sm">Hide Group</button>
             </form>
+            <a href="{% url 'racerv2:view_connections' entry.log.unique_id %}" class="btn btn-info btn-sm">View Connections</a>
           </td>
         </tr>
         <tr>
           <td colspan="5">
             <div class="table-responsive">
-              <table class="table table-bordered table-sm" style="font-size: 1.25rem;"> <!-- Adjust nested table font size -->
+              <table class="table table-bordered table-sm" style="font-size: 1.25rem;">
                 <thead>
                   <tr>
                     <th scope="col">Hashed IP</th>
@@ -53,7 +51,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  {% for record in log.logs %}
+                  {% for record in entry.connection_records %}
                   <tr>
                     <td>{{ record.ip_address }}</td>
                     <td>{{ record.user_agent }}</td>
@@ -64,7 +62,7 @@
                   </tr>
                   {% empty %}
                   <tr>
-                    <td colspan="6" class="text-center">No connection records available for this link.</td>
+                    <td colspan="6" class="text-center">No connection records available for this log.</td>
                   </tr>
                   {% endfor %}
                 </tbody>
