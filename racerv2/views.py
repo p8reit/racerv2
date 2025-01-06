@@ -1,7 +1,7 @@
 import uuid
 import json
 import logging
-from datetime import datetime
+#from datetime import datetime
 from io import BytesIO
 from PIL import Image
 import hashlib
@@ -9,6 +9,7 @@ import hashlib
 from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.decorators import login_required, permission_required
+from django.db.models import Count, Sum, Q
 from django.core.paginator import Paginator
 from django.utils import timezone
 from django.core.cache import cache
@@ -100,8 +101,12 @@ def generate_links(request):
     # For GET requests, render the page with a form
     return render(request, 'racerv2/generate_links.html')
 
+
+
 def track_embed(request, unique_id):
     try:
+        logger.debug(f"Testing timezone: {timezone.now()}")  # Debug line
+
         user_agent = request.META.get('HTTP_USER_AGENT', '')
         ip_address = request.META.get('REMOTE_ADDR', '')
         hashed_ip = hash_ip(ip_address) if ip_address else None  # Hash the IP address
@@ -113,9 +118,7 @@ def track_embed(request, unique_id):
             'HTTP_ACCEPT_ENCODING', 'HTTP_COOKIE', 'HTTP_CONNECTION', 'HTTP_UPGRADE_INSECURE_REQUESTS',
             'HTTP_SEC_FETCH_SITE', 'HTTP_SEC_FETCH_MODE', 'HTTP_SEC_FETCH_USER', 'HTTP_SEC_FETCH_DEST'
         ]
-
         headers = {key: value for key, value in request.META.items() if key in allowed_headers}
-        headers_json = json.dumps(headers)  # Serialize the filtered headers
 
         # Retrieve the tracked request
         tracked_request = TrackedRequest.objects.filter(unique_id=unique_id).first()
@@ -123,15 +126,23 @@ def track_embed(request, unique_id):
             logger.warning(f"Invalid unique_id accessed: {unique_id}")
             return HttpResponse("Invalid unique_id", status=404)
 
-        # Save connection record (assuming ConnectionRecord is properly set up)
+        # Save connection record
         ConnectionRecord.objects.create(
             tracked_request=tracked_request,
             ip_address=hashed_ip,  # Save the hashed IP address
             user_agent=user_agent,
             referrer=referrer,
-            headers=headers_json,
-            timestamp=timezone.now()
+            headers=headers,  # Use JSONField directly with dictionary
+            timestamp=timezone.now(),
+            is_google_hosted="googlebot" in user_agent.lower()  # Set based on user agent
         )
+
+        # Update relay_count
+        tracked_request.relay_count += 1
+        tracked_request.save()
+
+        # Recalculate heat score
+        tracked_request.calculate_heat_score()
 
         # Serve the 1x1 transparent GIF
         return HttpResponse(get_1x1_gif(), content_type='image/gif')
@@ -139,33 +150,21 @@ def track_embed(request, unique_id):
         logger.error(f"Error processing request for {unique_id}: {str(e)}")
         return HttpResponse("Error processing the request", status=500)
 
+
 @login_required
 @permission_required('racerv2.view_trackedrequest', raise_exception=True)
 def dashboard(request):
-    # Fetch logs with related connection records
-    logs = TrackedRequest.objects.filter(is_hidden=False).order_by('-timestamp')
-
-    # Enrich logs with related connection records
-    enriched_logs = []
-    for log in logs:
-        connection_records = ConnectionRecord.objects.filter(tracked_request=log).order_by('-timestamp')
-        enriched_logs.append({
-            'log': log,
-            'connection_records': connection_records
-        })
+    # Fetch logs with prefetching connection records
+    logs = TrackedRequest.objects.filter(is_hidden=False).prefetch_related('connection_records').order_by('-timestamp')
 
     # Calculate totals
     total_logs = logs.count()
-    relay_count_total = sum(int(log.relay_count) for log in logs if str(log.relay_count).isdigit())
-    google_hosted_count = sum(
-        1
-        for log in logs
-        for record in ConnectionRecord.objects.filter(tracked_request=log)
-        if record.is_google_hosted
-    )
+    relay_count_total = logs.aggregate(total_relays=Sum('relay_count'))['total_relays'] or 0
+    google_hosted_count = sum(log.connection_records.filter(is_google_hosted=True).count() for log in logs)
 
+    # Render the dashboard template
     return render(request, 'racerv2/dashboard.html', {
-        'logs': enriched_logs,
+        'logs': logs,
         'total_logs': total_logs,
         'relay_count_total': relay_count_total,
         'google_hosted_count': google_hosted_count,

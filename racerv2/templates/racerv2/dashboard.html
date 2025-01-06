@@ -21,20 +21,19 @@
         </tr>
       </thead>
       <tbody>
-        {% for entry in logs %}
-        {% if not entry.log.is_hidden %}
+        {% for log in logs %}
         <tr>
-          <td>{{ entry.log.unique_id }}</td>
-          <td>{{ entry.log.group_name }}</td>
-          <td>{{ entry.log.relay_count }}</td>
-          <td>{{ entry.log.timestamp }}</td>
+          <td>{{ log.unique_id }}</td>
+          <td>{{ log.group_name }}</td>
+          <td>{{ log.relay_count }}</td>
+          <td>{{ log.timestamp|date:"Y-m-d H:i:s" }}</td>
           <td>
             <form method="POST" action="{% url 'racerv2:hide_group' %}" style="display: inline;">
               {% csrf_token %}
-              <input type="hidden" name="group_name_to_hide" value="{{ entry.log.group_name }}">
+              <input type="hidden" name="group_name_to_hide" value="{{ log.group_name }}">
               <button type="submit" class="btn btn-danger btn-sm">Hide Group</button>
             </form>
-            <a href="{% url 'racerv2:view_connections' entry.log.unique_id %}" class="btn btn-info btn-sm">View Connections</a>
+            <a href="{% url 'racerv2:view_connections' log.unique_id %}" class="btn btn-info btn-sm">View Connections</a>
           </td>
         </tr>
         <tr>
@@ -52,14 +51,14 @@
                   </tr>
                 </thead>
                 <tbody>
-                  {% for record in entry.connection_records %}
+                  {% for record in log.connection_records.all %}
                   <tr>
                     <td>{{ record.ip_address }}</td>
                     <td>{{ record.user_agent }}</td>
                     <td>{{ record.referrer }}</td>
-                    <td>{{ record.headers }}</td>
-                    <td>{{ record.is_google_hosted }}</td>
-                    <td>{{ record.timestamp }}</td>
+                    <td>{{ record.headers|safe }}</td>
+                    <td>{{ record.is_google_hosted|yesno:"Yes,No" }}</td>
+                    <td>{{ record.timestamp|date:"Y-m-d H:i:s" }}</td>
                   </tr>
                   {% empty %}
                   <tr>
@@ -71,7 +70,6 @@
             </div>
           </td>
         </tr>
-        {% endif %}
         {% empty %}
         <tr>
           <td colspan="5" class="text-center">No visible logs available.</td>
