@@ -10,7 +10,7 @@ class TrackedRequest(models.Model):
     geolocation = models.TextField(null=True, blank=True)
     headers = models.TextField(null=True, blank=True)
     group_name = models.CharField(max_length=255, null=True, blank=True)  # Optional group identifier
-    is_hidden = models.BooleanField(default=True)  # Boolean to mark hidden requests
+    is_hidden = models.BooleanField(default=False)  # Boolean to mark hidden requests
     timestamp = models.DateTimeField(auto_now_add=True)
     relay_count = models.IntegerField(default=0)  # Changed to IntegerField
     heat_score = models.FloatField(default=0.0)  # Heat score for relay detection
