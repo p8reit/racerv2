@@ -23,7 +23,11 @@
       <tbody>
         {% for log in logs %}
         <tr>
-          <td>{{ log.unique_id }}</td>
+          <td>
+            <a href="http://127.0.0.1:8000/racerv2/track/{{ log.unique_id }}.gif">
+              {{ log.unique_id }}
+            </a>
+          </td>
           <td>{{ log.group_name }}</td>
           <td>{{ log.relay_count }}</td>
           <td>{{ log.timestamp|date:"Y-m-d H:i:s" }}</td>
