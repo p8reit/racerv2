@@ -22,9 +22,14 @@ from .models import TrackedRequest, ConnectionRecord
 
 logger = logging.getLogger(__name__)
 
-def hash_ip(ip_address):
-    """Hash an IP address using SHA256."""
-    return hashlib.sha256(ip_address.encode('utf-8')).hexdigest()
+def hash_ip(data):
+    """Hash input data (string or dictionary) using SHA256."""
+    if isinstance(data, dict):
+        # Serialize the dictionary to a JSON string
+        data = json.dumps(data, sort_keys=True)  # Ensure consistent ordering of keys
+    elif not isinstance(data, str):
+        raise ValueError("hash_ip expects input to be a string or dictionary")
+    return hashlib.sha256(data.encode('utf-8')).hexdigest()
 
 # Cache the GIF to optimize responses
 def get_1x1_gif():
@@ -115,11 +120,9 @@ def track_embed(request, unique_id):
         # Whitelist specific headers to extract
         allowed_headers = [
             'HTTP_HOST', 'HTTP_USER_AGENT', 'HTTP_ACCEPT', 'HTTP_ACCEPT_LANGUAGE',
-            'HTTP_ACCEPT_ENCODING', 'HTTP_COOKIE', 'HTTP_CONNECTION', 'HTTP_UPGRADE_INSECURE_REQUESTS',
-            'HTTP_SEC_FETCH_SITE', 'HTTP_SEC_FETCH_MODE', 'HTTP_SEC_FETCH_USER', 'HTTP_SEC_FETCH_DEST'
         ]
         headers = {key: value for key, value in request.META.items() if key in allowed_headers}
-
+        hashed_header = hash_ip(headers) if headers else None  # Hash the IP address
         # Retrieve the tracked request
         tracked_request = TrackedRequest.objects.filter(unique_id=unique_id).first()
         if not tracked_request:
@@ -132,7 +135,7 @@ def track_embed(request, unique_id):
             ip_address=hashed_ip,  # Save the hashed IP address
             user_agent=user_agent,
             referrer=referrer,
-            headers=headers,  # Use JSONField directly with dictionary
+            headers=hashed_header,  # Use JSONField directly with dictionary
             timestamp=timezone.now(),
             is_google_hosted="googlebot" in user_agent.lower()  # Set based on user agent
         )
