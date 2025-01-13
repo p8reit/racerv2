@@ -119,7 +119,7 @@ def track_embed(request, unique_id):
 
         # Whitelist specific headers to extract
         allowed_headers = [
-            'HTTP_HOST', 'HTTP_USER_AGENT', 'HTTP_ACCEPT', 'HTTP_ACCEPT_LANGUAGE',
+            'HTTP_HOST', 'HTTP_USER_AGENT', 'HTTP_ACCEPT', 'HTTP_ACCEPT_LANGUAGE'
         ]
         headers = {key: value for key, value in request.META.items() if key in allowed_headers}
         hashed_header = hash_ip(headers) if headers else None  # Hash the IP address
